@@ -1,0 +1,48 @@
+{
+	"name": "@alphainsiderinc/n8n-nodes-alphainsider",
+	"version": "1.0.0",
+	"description": "Official community node to connect n8n to the Alpha Insider API.",
+	"keywords": [
+		"n8n-nodes",
+		"n8n-community-node",
+		"alphainsider",
+		"automation",
+		"integration"
+	],
+	"license": "MIT",
+	"author": {
+		"name": "AlphaInsider",
+		"email": "admin@alphainsider.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/AlphaInsider/n8n-nodes-alphainsider"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "npm run clean && tsc && npm run copy:svg",
+		"copy:svg": "cp alphaLogo.svg dist/nodes/AlphaInsider/alphaLogo.svg",
+		"prepublishOnly": "npm run build"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"credentials": [
+			"dist/credentials/AlphaInsiderApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/AlphaInsider/AlphaInsider.node.js"
+		]
+	},
+	"peerDependencies": {
+		"n8n-workflow": "^1.116.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.3"
+	}
+}
