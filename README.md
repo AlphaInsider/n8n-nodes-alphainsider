@@ -1,1 +1,1 @@
-# ai-seo-cursor-2
+AlphaInsider
