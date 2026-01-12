@@ -2,17 +2,9 @@
 	"name": "@alphainsiderinc/n8n-nodes-alphainsider",
 	"version": "1.0.0",
 	"description": "Official community node to connect n8n to the Alpha Insider API.",
-	"keywords": [
-		"n8n-nodes",
-		"n8n-community-node",
-		"alphainsider",
-		"automation",
-		"integration"
-	],
 	"license": "MIT",
 	"author": {
-		"name": "AlphaInsider",
-		"email": "admin@alphainsider.com"
+		"name": "AlphaInsider"
 	},
 	"repository": {
 		"type": "git",
@@ -40,7 +32,7 @@
 		]
 	},
 	"peerDependencies": {
-		"n8n-workflow": "^1.116.0"
+		"n8n-workflow": "^2.4.0"
 	},
 	"devDependencies": {
 		"typescript": "^5.8.3"

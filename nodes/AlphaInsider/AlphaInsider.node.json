@@ -8,12 +8,12 @@
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": ""
+				"url": "https://alphainsider.com/settings/developers"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": ""
+				"url": "https://api.alphainsider.com"
 			}
 		]
 	}
