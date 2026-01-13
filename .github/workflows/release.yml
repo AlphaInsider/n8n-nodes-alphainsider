@@ -100,5 +100,5 @@ jobs:
           prerelease: false
           generate_release_notes: true
 
-      - name: Publish to NPM (Provenance)
-        run: npm publish --provenance --access public --tag latest
+      - name: Publish to NPM
+        run: npm publish --access public --tag latest
