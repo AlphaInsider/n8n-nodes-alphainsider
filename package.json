@@ -30,9 +30,7 @@
 	},
 	"scripts": {
 		"build": "n8n-node build",
-		"dev": "n8n-node dev",
-		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
+		"dev": "n8n-node dev"
 	},
 	"files": [
 		"dist"
@@ -49,7 +47,6 @@
 	"devDependencies": {
 		"@n8n/node-cli": "^0.17.0",
 		"eslint": "^9.39.2",
-		"release-it": "^19.2.3",
 		"typescript": "^5.9.3"
 	},
 	"peerDependencies": {
