@@ -19,7 +19,21 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Operations
 
-_List the operations supported by your node._  
+This node supports two main resources:
+
+### New Order Webhook
+- **Create**: Send webhook orders to your AlphaInsider strategies
+  - Select a strategy from your account (dynamically loaded)
+  - Specify stock ID (e.g., `AAPL:NASDAQ`)
+  - Choose action: Buy, Sell, Long, Short, Close, or Flat
+  - Set leverage (0-2x)
+
+### Custom API Call
+- **Create**: Make custom API calls to any AlphaInsider endpoint
+  - Choose HTTP method (GET or POST)
+  - Specify endpoint path
+  - Add query parameters and request body as JSON
+  - Optional authentication support
 
 ## Credentials
 
@@ -43,14 +57,24 @@ _List the operations supported by your node._
 
 ## Usage
 
-_This is an optional section. Use it to help users with any difficult or confusing aspects of the node._
+### Choosing the Right Resource
 
-_By the time users are looking for community nodes, they probably already know n8n basics. But if you expect new users, you can link to the [Try it out](https://docs.n8n.io/try-it-out/) documentation to help them get started._
+- **New Order Webhook**: Use this when you want to send trading signals to your AlphaInsider strategies. This is the most common use case for automated trading workflows.
+
+- **Custom API Call**: Use this for advanced scenarios or endpoints not covered by the New Order Webhook resource. Refer to the [AlphaInsider API documentation](https://api.alphainsider.com) for available endpoints.
+
+### Tips
+
+- The **Strategy** dropdown automatically loads all strategies from your AlphaInsider account. If you don't see your strategies, verify your API credentials have the `strategies → getUserStrategies` or `webhooks → newOrderWebhook` permission.
+
+- For stock IDs, use the format `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `TSLA:NASDAQ`, `BTC:CRYPTO`).
+
+- New to n8n? Check out the [Try it out](https://docs.n8n.io/try-it-out/) documentation to get started with workflows.
 
 ## Resources
 
 - **[AlphaInsider Platform](https://alphainsider.com)** - Open marketplace for trading strategies
-- **[AlphaInsider API Documentation](https://api.alphainsider.com/resources/webhooks/neworderwebhook)** - Complete API reference
+- **[AlphaInsider API Documentation](https://api.alphainsider.com)** - Complete API reference
 - **[AlphaInsider Developer Settings](https://alphainsider.com/settings/developers)** - Generate and manage API keys
 - **[n8n Documentation](https://docs.n8n.io/)** - Learn more about n8n
 - **[n8n Community Nodes](https://docs.n8n.io/integrations/#community-nodes)** - Installation and usage guide
