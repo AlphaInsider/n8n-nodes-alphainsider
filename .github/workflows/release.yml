@@ -1,0 +1,104 @@
+name: Build and Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version number (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Validate version format
+        run: |
+          if [[ ! "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "Error: Invalid version format. Use semantic versioning (e.g., 1.0.0 or 1.0.0-beta.1)"
+            exit 1
+          fi
+
+      - name: Update package.json version
+        run: |
+          npm version ${{ inputs.version }} --no-git-tag-version
+          git config --global user.name "Github Action"
+          git config --global user.email "support@alphainsider.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ inputs.version }}"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Create build artifact
+        run: |
+          mkdir -p release-artifacts
+          tar -czf release-artifacts/n8n-nodes-alphainsider-v${{ inputs.version }}.tar.gz dist/ package.json README.md LICENSE.md
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-v${{ inputs.version }}
+          path: |
+            dist/
+            package.json
+            package-lock.json
+            README.md
+            LICENSE.md
+          retention-days: 90
+
+      - name: Push version commit
+        run: |
+          git push origin ${{ github.ref_name }}
+
+      - name: Create and push tag
+        run: |
+          git tag -a "v${{ inputs.version }}" -m "Release v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
+          body: |
+            ## Release v${{ inputs.version }}
+
+            ### Installation
+            ```bash
+            npm install @alphainsiderinc/n8n-nodes-alphainsider@${{ inputs.version }}
+            ```
+
+            ### Changes
+            See commit history for detailed changes.
+
+            ### Artifacts
+            - Build artifacts are attached below
+            - Published to NPM: [@alphainsiderinc/n8n-nodes-alphainsider](https://www.npmjs.com/package/@alphainsiderinc/n8n-nodes-alphainsider)
+          files: |
+            release-artifacts/*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      - name: Publish to NPM (Provenance)
+        run: npm publish --provenance --access public --tag latest
