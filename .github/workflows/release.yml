@@ -11,6 +11,7 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    environment: npm-publish  # Add environment for trusted publishing
 
     permissions:
       contents: write
@@ -25,8 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '18'  # Use stable Node.js version
 
       - name: Validate version format
         run: |
