@@ -16,7 +16,7 @@ export class AlphaInsider implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'AlphaInsider',
     name: 'alphaInsider',
-    icon: 'file:alphaLogo.svg',
+    icon: 'file:logo.svg',
     group: ['transform'],
     version: 1,
     subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
