@@ -207,61 +207,28 @@ Authorization: your-api-key
 
 ### How It Works (Technical Implementation)
 
-The AlphaInsider node is built using n8n's **declarative routing style**, which means:
+The AlphaInsider node is built using n8n's **traditional execute method pattern** with modular helper functions:
 
-1. **No Custom Execute Method**: Instead of writing custom code to make HTTP requests, the node uses declarative `routing` configurations that n8n handles automatically.
+1. **Execute Method with Resource Routing**: The main `execute()` method routes requests to specialized helper functions based on the selected resource type (New Order Webhook or Custom API Call).
 
-2. **Dynamic Request Building**: Based on user-selected parameters, the node dynamically constructs API requests:
-   - For "New Order Webhook": Builds a POST request with trading parameters
-   - For "Custom API Call": Builds a flexible request based on user inputs
+2. **Helper Functions** (from `helpers.ts`):
+   - `executeNewOrderWebhook()`: Constructs POST requests to `/newOrderWebhook` with trading parameters
+   - `executeApiCall()`: Builds flexible HTTP requests with dynamic method, endpoint, query params, and body
 
-3. **Credential Integration**: The node seamlessly integrates with n8n's credential system:
-   - API key is securely stored and referenced via `={{$credentials.AlphaInsiderApi.apiKey}}`
+3. **Dynamic Strategy Loading**: The node includes a `loadOptions` method that fetches the user's strategies from AlphaInsider, making a GET request to `/getUserInfo` to get the user ID, then `/getUserStrategies` to populate the strategy dropdown.
+
+4. **Credential Integration**: The node seamlessly integrates with n8n's credential system:
+   - API key is securely accessed via `await context.getCredentials('AlphaInsiderApi')`
+   - Used in Authorization headers or request body parameters
    - Credentials are validated on save using a test request to `/getUserInfo`
 
-4. **Expression Support**: All parameters support n8n expressions (indicated by `={{...}}`), allowing dynamic values from:
+5. **Expression Support**: All parameters support n8n expressions (indicated by `={{...}}`), allowing dynamic values from:
    - Previous node outputs
    - Workflow variables
    - JavaScript expressions
    - Built-in functions
 
-5. **Conditional UI**: The node uses `displayOptions` to show/hide parameters based on the selected resource and operation, providing a clean, context-aware interface.
-
-**Key Code Structure** (from `AlphaInsider.node.ts`):
-```typescript
-// Base configuration
-requestDefaults: {
-  baseURL: 'https://alphainsider.com/api',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-}
-
-// Resource selection
-properties: [
-  {
-    displayName: 'Resource',
-    options: ['New Order Webhook', 'Custom API Call']
-  }
-]
-
-// Declarative routing for New Order Webhook
-routing: {
-  request: {
-    method: 'POST',
-    url: '/newOrderWebhook',
-    body: {
-      strategy_id: '={{$parameter.strategy_id}}',
-      stock_id: '={{$parameter.stock_id}}',
-      action: '={{$parameter.action}}',
-      api_token: '={{$credentials.AlphaInsiderApi.apiKey}}',
-      leverage: '={{Math.round($parameter.leverage * 100) / 100}}'
-    }
-  }
-}
-```
-
-This approach makes the node maintainable, type-safe, and consistent with n8n best practices.
+6. **Conditional UI**: The node uses `displayOptions` to show/hide parameters based on the selected resource and operation, providing a clean, context-aware interface.
 
 ## Credentials
 
