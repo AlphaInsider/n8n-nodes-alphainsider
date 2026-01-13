@@ -5,7 +5,21 @@
 	"license": "MIT",
 	"homepage": "https://alphainsider.com/",
 	"keywords": [
-		"n8n-community-node-package"
+		"n8n-community-node-package",
+		"n8n",
+		"n8n-node",
+		"alphainsider",
+		"trading",
+		"trading-bot",
+		"trading-strategies",
+		"automated-trading",
+		"stocks",
+		"crypto",
+		"cryptocurrency",
+		"investing",
+		"finance",
+		"webhook",
+		"api"
 	],
 	"author": {
 		"name": "AlphaInsider"
