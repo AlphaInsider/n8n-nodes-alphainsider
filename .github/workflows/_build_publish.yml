@@ -50,6 +50,8 @@ jobs:
 
       - name: Create and push tag
         run: |
+          git config --global user.name "Github Action"
+          git config --global user.email "support@alphainsider.com"
           git tag -a "v${{ inputs.version }}" -m "Release v${{ inputs.version }}"
           git push origin "v${{ inputs.version }}"
 
