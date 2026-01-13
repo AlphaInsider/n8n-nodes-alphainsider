@@ -1,8 +1,12 @@
 {
 	"name": "@alphainsiderinc/n8n-nodes-alphainsider",
 	"version": "1.0.0",
-	"description": "Official community node to connect n8n to the Alpha Insider API.",
+	"description": "Official community node to connect n8n to AlphaInsider's API.",
 	"license": "MIT",
+	"homepage": "https://alphainsider.com/",
+	"keywords": [
+		"n8n-community-node-package"
+	],
 	"author": {
 		"name": "AlphaInsider"
 	},
@@ -10,14 +14,11 @@
 		"type": "git",
 		"url": "https://github.com/AlphaInsider/n8n-nodes-alphainsider"
 	},
-	"engines": {
-		"node": ">=18.0.0"
-	},
 	"scripts": {
-		"clean": "rm -rf dist",
-		"build": "npm run clean && tsc && npm run copy:svg",
-		"copy:svg": "cp alphaLogo.svg dist/nodes/AlphaInsider/alphaLogo.svg",
-		"prepublishOnly": "npm run build"
+		"build": "n8n-node build",
+		"dev": "n8n-node dev",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
 	},
 	"files": [
 		"dist"
@@ -31,10 +32,13 @@
 			"dist/nodes/AlphaInsider/AlphaInsider.node.js"
 		]
 	},
-	"peerDependencies": {
-		"n8n-workflow": "^2.4.0"
-	},
 	"devDependencies": {
-		"typescript": "^5.8.3"
+		"@n8n/node-cli": "^0.17.0",
+		"eslint": "^9.39.2",
+		"release-it": "^19.2.3",
+		"typescript": "^5.9.3"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "^2.4.1"
 	}
 }
