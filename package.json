@@ -22,7 +22,8 @@
 		"api"
 	],
 	"author": {
-		"name": "AlphaInsider"
+		"name": "AlphaInsider",
+		"email": "support@alphainsider.com"
 	},
 	"repository": {
 		"type": "git",
