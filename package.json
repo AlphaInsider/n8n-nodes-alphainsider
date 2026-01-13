@@ -1,6 +1,6 @@
 {
 	"name": "@alphainsiderinc/n8n-nodes-alphainsider",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"description": "Official community node to connect n8n to the Alpha Insider API.",
 	"license": "MIT",
 	"homepage": "https://alphainsider.com/",
