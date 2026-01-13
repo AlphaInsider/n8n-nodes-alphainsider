@@ -1,0 +1,73 @@
+name: _update_version
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: 'Version Number (eg: 0.0.0)'
+    outputs:
+      version:
+        description: 'The updated version number'
+        value: ${{ jobs.update_version.outputs.version }}
+
+jobs:
+  update_version:
+    outputs:
+      version: ${{ steps.set_output.outputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      # verify version format
+      - name: Verify version format
+        shell: bash
+        run: |
+          if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format."
+            exit 1
+          fi
+      
+      # checkout master
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+      
+      # verify new_version >= current_version
+      - name: verify new_version >= current_version
+        shell: bash
+        run: |
+          NEW_VERSION="${{ inputs.version }}"
+          CURRENT_VERSION=$(jq -r '.version' package.json)
+          if [[ "$(printf "%s\n%s" "$CURRENT_VERSION" "$NEW_VERSION" | sort -V | head -n1)" != "$CURRENT_VERSION" ]]; then
+            echo "Error: New version ($NEW_VERSION) is less than the current version ($CURRENT_VERSION)."
+            exit 1
+          fi
+      
+      # update package version
+      - name: Update package version
+        shell: bash
+        run: |
+          NEW_VERSION="${{ inputs.version }}"
+          npm version "$NEW_VERSION" --no-git-tag-version
+      
+      # push changes master
+      - name: Push changes master
+        shell: bash
+        run: |
+          git config --global user.name "Github Action"
+          git config --global user.email "support@alphainsider.com"
+          git add package.json
+          if git diff --staged --quiet; then
+            echo "Skipping, no changes to commit."
+          else
+            git commit -m "Updated version"
+            git push origin master
+          fi
+
+      # set output
+      - name: Set output
+        id: set_output
+        shell: bash
+        run: |
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
