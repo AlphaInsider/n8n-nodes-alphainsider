@@ -1,0 +1,23 @@
+name: Build and Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version number (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  # update version
+  update_version:
+    uses: ./.github/workflows/_update_version.yml
+    with:
+      version: ${{ github.event.inputs.version }}
+
+  # build and publish
+  build_publish:
+    needs: update_version
+    uses: ./.github/workflows/_build_publish.yml
+    with:
+      version: ${{ needs.update_version.outputs.version }}
