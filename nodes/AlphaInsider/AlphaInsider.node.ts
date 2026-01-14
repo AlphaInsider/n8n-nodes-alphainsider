@@ -4,12 +4,12 @@ import {
   ILoadOptionsFunctions,
   INodePropertyOptions,
   IHttpRequestMethods,
-  NodeConnectionType,
   IExecuteFunctions,
-  INodeExecutionData
+  INodeExecutionData,
+  NodeConnectionTypes
 } from 'n8n-workflow';
 
-import {executeNewOrderWebhook, executeApiCall} from './helpers';
+import {executeNewOrderWebhook} from './helpers';
 
 // AlphaInsider Node Class
 export class AlphaInsider implements INodeType {
@@ -19,86 +19,53 @@ export class AlphaInsider implements INodeType {
     icon: 'file:logo.svg',
     group: ['transform'],
     version: 1,
-    subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
+    subtitle: '={{$parameter["action"]}}',
     description: 'Open Marketplace for Trading Strategies. Follow top crypto & stock strategies in real-time. Automate trades by connecting your broker or exchange. Split capital across multiple strategies.',
     defaults: {
       name: 'AlphaInsider'
     },
-    inputs: ['main' as NodeConnectionType],
-    outputs: ['main' as NodeConnectionType],
+    inputs: [NodeConnectionTypes.Main],
+    outputs: [NodeConnectionTypes.Main],
     credentials: [
       {
         name: 'AlphaInsiderApi',
-        required: false
+        required: true
       }
     ],
-    requestDefaults: {
-      baseURL: 'https://alphainsider.com/api',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    },
     properties: [
       {
-        displayName: 'Resource',
-        name: 'resource',
+        displayName: 'Action',
+        name: 'action',
         type: 'options',
         noDataExpression: true,
         options: [
           {
             name: 'New Order Webhook',
-            value: 'newOrderWebhook'
+            value: 'newOrderWebhook',
+            action: 'Create new order webhook',
+            description: 'Create a new order from webhook'
           },
           {
             name: 'Custom API Call',
-            value: 'apiCall'
+            value: 'customApiCall',
+            action: 'Use HTTP Request node',
+            description: 'Use the HTTP Request node for all other API calls'
           }
         ],
         default: 'newOrderWebhook'
       },
 
-      // === NEW ORDER WEBHOOK OPERATION === //
+      // === CUSTOM API CALL NOTICE === //
       {
-        displayName: 'Operation',
-        name: 'operation',
-        type: 'options',
-        noDataExpression: true,
+        displayName: 'For custom API calls, use the HTTP Request node with your AlphaInsider API credentials. Your credentials will be available in the HTTP Request node\'s "Authentication" -> "Predefined Credential" dropdown.',
+        name: 'customApiNotice',
+        type: 'notice',
+        default: '',
         displayOptions: {
           show: {
-            resource: ['newOrderWebhook']
+            action: ['customApiCall']
           }
-        },
-        options: [
-          {
-            name: 'Create',
-            value: 'create',
-            action: 'Create a new webhook order',
-            description: 'New order from webhook.'
-          }
-        ],
-        default: 'create'
-      },
-
-      // === CUSTOM API CALL OPERATION === //
-      {
-        displayName: 'Operation',
-        name: 'operation',
-        type: 'options',
-        noDataExpression: true,
-        displayOptions: {
-          show: {
-            resource: ['apiCall']
-          }
-        },
-        options: [
-          {
-            name: 'Create',
-            value: 'Create',
-            action: 'Create a custom API call',
-            description: 'Call any AlphaInsider API endpoint with full control over method, path, query parameters and body.'
-          }
-        ],
-        default: 'Create'
+        }
       },
 
       // === NEW ORDER WEBHOOK PARAMETERS === //
@@ -114,7 +81,7 @@ export class AlphaInsider implements INodeType {
         description: 'Select a strategy from your AlphaInsider account.',
         displayOptions: {
           show: {
-            resource: ['newOrderWebhook']
+            action: ['newOrderWebhook']
           }
         }
       },
@@ -127,13 +94,13 @@ export class AlphaInsider implements INodeType {
         description: 'The id of the stock: "stock:exchange" or "stock_id". Ex: AAPL:NASDAQ.',
         displayOptions: {
           show: {
-            resource: ['newOrderWebhook']
+            action: ['newOrderWebhook']
           }
         }
       },
       {
-        displayName: 'Action',
-        name: 'action',
+        displayName: 'Order Action',
+        name: 'orderAction',
         type: 'options',
         default: '',
         required: true,
@@ -148,7 +115,7 @@ export class AlphaInsider implements INodeType {
         description: 'Order actions.',
         displayOptions: {
           show: {
-            resource: ['newOrderWebhook']
+            action: ['newOrderWebhook']
           }
         }
       },
@@ -164,77 +131,7 @@ export class AlphaInsider implements INodeType {
         },
         displayOptions: {
           show: {
-            resource: ['newOrderWebhook']
-          }
-        }
-      },
-
-      // === CUSTOM API CALL PARAMETERS === //
-      {
-        displayName: 'HTTP Method',
-        name: 'httpMethod',
-        type: 'options',
-        default: 'GET',
-        required: true,
-        options: [
-          {name: 'GET', value: 'GET'},
-          {name: 'POST', value: 'POST'}
-        ],
-        description: 'HTTP request method.',
-        displayOptions: {
-          show: {
-            resource: ['apiCall']
-          }
-        }
-      },
-      {
-        displayName: 'Has Authentication',
-        name: 'auth',
-        type: 'boolean',
-        default: true,
-        required: true,
-        description: 'Require authentication for request.',
-        displayOptions: {
-          show: {
-            resource: ['apiCall']
-          }
-        }
-      },
-      {
-        displayName: 'Endpoint',
-        name: 'endpoint',
-        type: 'string',
-        default: '',
-        required: true,
-        placeholder: '/getUserInfo',
-        description: 'Endpoint path appended to https://alphainsider.com/api (must start with /).',
-        displayOptions: {
-          show: {
-            resource: ['apiCall']
-          }
-        }
-      },
-      {
-        displayName: 'Query Parameters',
-        name: 'queryParameters',
-        type: 'json',
-        default: '{}',
-        description: 'Query/string parameters as a JSON object. Leave {} for none.',
-        displayOptions: {
-          show: {
-            resource: ['apiCall']
-          }
-        }
-      },
-      {
-        displayName: 'Body',
-        name: 'body',
-        type: 'json',
-        default: '{}',
-        description: 'Request body as a JSON object. Leave {} if no body should be sent.',
-        displayOptions: {
-          show: {
-            resource: ['apiCall']
+            action: ['newOrderWebhook']
           }
         }
       }
@@ -245,22 +142,16 @@ export class AlphaInsider implements INodeType {
     loadOptions: {
       async getStrategies(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
         try {
-          const credentials = await this.getCredentials('AlphaInsiderApi');
-
-          //if no credentials, return empty array
-          if (!credentials || !credentials.apiKey) return [];
-
           const userInfoOptions = {
             method: 'GET' as IHttpRequestMethods,
             url: 'https://alphainsider.com/api/getUserInfo',
             headers: {
-              Authorization: credentials.apiKey as string,
               'Content-Type': 'application/json'
             },
             json: true
           };
 
-          const userInfo = await this.helpers.httpRequest(userInfoOptions);
+          const userInfo = await this.helpers.httpRequestWithAuthentication.call(this, 'AlphaInsiderApi', userInfoOptions);
           const userId = userInfo.response?.user_id;
 
           if (!userId) {
@@ -271,16 +162,15 @@ export class AlphaInsider implements INodeType {
             method: 'GET' as IHttpRequestMethods,
             url: 'https://alphainsider.com/api/getUserStrategies',
             headers: {
-              Authorization: credentials.apiKey as string,
               'Content-Type': 'application/json'
             },
             qs: {
-              user_id: userId as string
+              user_id: userId
             },
             json: true
           };
 
-          const strategyInfo = await this.helpers.httpRequest(strategiesOptions);
+          const strategyInfo = await this.helpers.httpRequestWithAuthentication.call(this, 'AlphaInsiderApi', strategiesOptions);
           const strategies = strategyInfo.response;
 
           if (!Array.isArray(strategies)) {
@@ -306,24 +196,31 @@ export class AlphaInsider implements INodeType {
 
     for (let i = 0; i < items.length; i++) {
       try {
-        const resource = this.getNodeParameter('resource', i) as string;
+        const action = this.getNodeParameter('action', i) as string;
         let responseData;
 
-        if (resource === 'newOrderWebhook') {
+        if (action === 'newOrderWebhook') {
+          const credentials = await this.getCredentials('AlphaInsiderApi');
+          if (!credentials || !credentials.apiKey) {
+            throw new Error('AlphaInsider API credentials are required for creating webhook orders');
+          }
           responseData = await executeNewOrderWebhook(this, i);
-        } else if (resource === 'apiCall') {
-          responseData = await executeApiCall(this, i);
+        } else {
+          responseData = {
+            message: 'For custom API calls, please use the HTTP Request node with your AlphaInsider API credentials.',
+            ...items[i].json
+          };
         }
 
         returnData.push({
-          json: responseData
+          json: responseData,
+          pairedItem: { item: i }
         });
       } catch (error) {
         if (this.continueOnFail()) {
           returnData.push({
-            json: {
-              error: (error as Error).message
-            }
+            json: { error: (error as Error).message },
+            pairedItem: { item: i }
           });
           continue;
         }
