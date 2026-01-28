@@ -9,7 +9,7 @@ import {
   NodeConnectionTypes
 } from 'n8n-workflow';
 
-import {executeNewOrderWebhook} from './helpers';
+import {executeNewOrderAllocations} from './helpers';
 
 // AlphaInsider Node Class
 export class AlphaInsider implements INodeType {
@@ -40,10 +40,10 @@ export class AlphaInsider implements INodeType {
         noDataExpression: true,
         options: [
           {
-            name: 'New Order Webhook',
-            value: 'newOrderWebhook',
-            action: 'Create new order webhook',
-            description: 'Create a new order from webhook'
+            name: 'New Order Allocations',
+            value: 'newOrderAllocations',
+            action: 'Create new order allocations',
+            description: 'Create new orders for a given strategy to match the allocations list.'
           },
           {
             name: 'Custom API Call',
@@ -52,7 +52,7 @@ export class AlphaInsider implements INodeType {
             description: 'Use the HTTP Request node for all other API calls'
           }
         ],
-        default: 'newOrderWebhook'
+        default: 'newOrderAllocations'
       },
 
       // === CUSTOM API CALL NOTICE === //
@@ -68,7 +68,7 @@ export class AlphaInsider implements INodeType {
         }
       },
 
-      // === NEW ORDER WEBHOOK PARAMETERS === //
+      // === NEW ORDER ALLOCATIONS PARAMETERS === //
       {
         displayName: 'Strategy',
         name: 'strategy_id',
@@ -81,57 +81,83 @@ export class AlphaInsider implements INodeType {
         description: 'Select a strategy from your AlphaInsider account.',
         displayOptions: {
           show: {
-            action: ['newOrderWebhook']
+            action: ['newOrderAllocations']
           }
         }
       },
       {
-        displayName: 'Stock ID',
-        name: 'stock_id',
-        type: 'string',
-        default: '',
+        displayName: 'Allocations',
+        name: 'allocations',
+        type: 'fixedCollection',
+        default: {},
+        typeOptions: {
+          multipleValues: true
+        },
+        description: 'Array of allocations to create',
+        placeholder: 'Add Allocation',
         required: true,
-        description: 'The id of the stock: "stock:exchange" or "stock_id". Ex: AAPL:NASDAQ.',
         displayOptions: {
           show: {
-            action: ['newOrderWebhook']
+            action: ['newOrderAllocations']
           }
-        }
-      },
-      {
-        displayName: 'Order Action',
-        name: 'orderAction',
-        type: 'options',
-        default: '',
-        required: true,
+        },
         options: [
-          {name: 'Buy', value: 'buy'},
-          {name: 'Long', value: 'long'},
-          {name: 'Sell', value: 'sell'},
-          {name: 'Short', value: 'short'},
-          {name: 'Close', value: 'close'},
-          {name: 'Flat', value: 'flat'}
-        ],
-        description: 'Order actions.',
-        displayOptions: {
-          show: {
-            action: ['newOrderWebhook']
+          {
+            name: 'allocationValues',
+            displayName: 'Allocation',
+            values: [
+              {
+                displayName: 'Stock ID',
+                name: 'stock_id',
+                type: 'string',
+                default: '',
+                required: true,
+                description: 'Stock ID: "SYMBOL:EXCHANGE" or stock_id. Ex: AAPL:NASDAQ.',
+                placeholder: 'AAPL:NASDAQ'
+              },
+              {
+                displayName: 'Action',
+                name: 'action',
+                type: 'options',
+                default: 'long',
+                required: true,
+                options: [
+                  {name: 'Long', value: 'long'},
+                  {name: 'Short', value: 'short'},
+                  {name: 'Close', value: 'close'}
+                ],
+                description: 'The action for the order'
+              },
+              {
+                displayName: 'Percent',
+                name: 'percent',
+                type: 'number',
+                default: 1,
+                description: 'Percentage of strategy buying power (0 <= x <= 1)',
+                typeOptions: {
+                  minValue: 0,
+                  maxValue: 1,
+                  numberPrecision: 4
+                }
+              }
+            ]
           }
-        }
+        ]
       },
       {
         displayName: 'Leverage',
         name: 'leverage',
         type: 'number',
-        default: 1.5,
-        description: 'Leverage to trade at.',
+        default: 1,
+        description: 'Leverage to trade at (0 <= x < 2). Defaults to 1. WARNING: 2x leverage orders may fail if prices move; use less than 1.95x for reliable fills.',
         typeOptions: {
           minValue: 0,
-          maxValue: 2
+          maxValue: 2,
+          numberPrecision: 2
         },
         displayOptions: {
           show: {
-            action: ['newOrderWebhook']
+            action: ['newOrderAllocations']
           }
         }
       }
@@ -199,12 +225,12 @@ export class AlphaInsider implements INodeType {
         const action = this.getNodeParameter('action', i) as string;
         let responseData;
 
-        if (action === 'newOrderWebhook') {
+        if (action === 'newOrderAllocations') {
           const credentials = await this.getCredentials('AlphaInsiderApi');
           if (!credentials || !credentials.apiKey) {
-            throw new Error('AlphaInsider API credentials are required for creating webhook orders');
+            throw new Error('AlphaInsider API credentials are required for creating order allocations');
           }
-          responseData = await executeNewOrderWebhook(this, i);
+          responseData = await executeNewOrderAllocations(this, i);
         } else {
           responseData = {
             message: 'For custom API calls, please use the HTTP Request node with your AlphaInsider API credentials.',
