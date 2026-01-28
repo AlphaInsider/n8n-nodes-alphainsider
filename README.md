@@ -27,8 +27,8 @@ Send multiple position allocations to your AlphaInsider strategies in a single r
 - **Allocations**: Array of allocation objects (add multiple), each containing:
   - **Stock ID**: Format as `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `BTC:CRYPTO`)
   - **Action**: Buy, Sell, Long, Short, Close, or Flat
-  - **Percent**: Percentage of strategy buying power to allocate (0 <= x <= 1, optional, defaults to 1)
-- **Leverage**: Set trading leverage (0 <= x < 2, optional, defaults to 1).  **WARNING:** 2x leverage orders may fail if prices move; use less than 1.95x for reliable fills
+  - **Percent**: Percentage of strategy buying power to allocate (0 <= x <= 1, defaults to 1)
+- **Leverage**: Set trading leverage (0 <= x < 2, defaults to 1).  **WARNING:** 2x leverage orders may fail if prices move; use less than 1.95x for reliable fills
 
 ### Custom API Calls
 For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP Request node** with your AlphaInsider API credential. Your credentials will be available in the HTTP Request node under **Authentication** → **Predefined Credential Type** → **AlphaInsider API**.
@@ -66,8 +66,8 @@ For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP 
 4. Click **Add Allocation** to create one or more allocations:
    - Enter the stock ID (e.g., `AAPL:NASDAQ`)
    - Select the action (Buy, Sell, Long, Short, Close, or Flat)
-   - Set the percent of buying power to allocate (optional, defaults to 1 = 100%)
-5. Optionally adjust the leverage (defaults to 1)
+   - Set the percent of strategy buying power to allocate (0 <= x <= 1, defaults to 1 = 100%)
+5. Adjust the leverage (0 <= x < 2,defaults to 1)
 6. Connect your trigger (e.g., webhook, schedule, or another node)
 
 ### Example: Portfolio Rebalancing

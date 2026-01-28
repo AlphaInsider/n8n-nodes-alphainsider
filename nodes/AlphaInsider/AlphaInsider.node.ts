@@ -133,7 +133,7 @@ export class AlphaInsider implements INodeType {
                 name: 'percent',
                 type: 'number',
                 default: 1,
-                description: 'Percentage of strategy buying power (0 <= x <= 1)',
+                description: 'Percentage of strategy buying power (0 <= x <= 1). Defaults to 1.',
                 typeOptions: {
                   minValue: 0,
                   maxValue: 1,
