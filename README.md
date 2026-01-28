@@ -19,14 +19,16 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Operations
 
-### New Order Webhook
-Send trading signals to your AlphaInsider strategies through webhook orders.
+### New Order Allocations
+Send multiple position allocations to your AlphaInsider strategies in a single request. Perfect for portfolio rebalancing or executing multi-asset trading signals.
 
 **Parameters:**
 - **Strategy**: Select from your account strategies (dynamically loaded)
-- **Stock ID**: Format as `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `BTC:CRYPTO`)
-- **Order Action**: Buy, Sell, Long, Short, Close, or Flat
-- **Leverage**: Set trading leverage (0-2x, rounded to 2 decimal places)
+- **Allocations**: Array of allocation objects (add multiple), each containing:
+  - **Stock ID**: Format as `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `BTC:CRYPTO`)
+  - **Action**: Buy, Sell, Long, Short, Close, or Flat
+  - **Percent**: Percentage of strategy buying power to allocate (0 <= x <= 1, optional, defaults to 1)
+- **Leverage**: Set trading leverage (0 <= x < 2, optional, defaults to 1).  **WARNING:** 2x leverage orders may fail if prices move; use less than 1.95x for reliable fills
 
 ### Custom API Calls
 For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP Request node** with your AlphaInsider API credential. Your credentials will be available in the HTTP Request node under **Authentication** → **Predefined Credential Type** → **AlphaInsider API**.
@@ -39,7 +41,7 @@ For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP 
    - Log in to [AlphaInsider](https://alphainsider.com)
    - Navigate to [Settings → Developers](https://alphainsider.com/settings/developers)
    - Click "Generate New API Key"
-   - Set the required permissions: **webhooks → newOrderWebhook**
+   - Set the required permissions: **trades → newOrderAllocations**, **users → getUserInfo**, **strategies → getUserStrategies**
    - Copy your API key securely
 
 2. **Add Credentials in n8n**:
@@ -59,10 +61,21 @@ For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP 
 ### Basic Workflow Example
 
 1. Add the **AlphaInsider** node to your workflow
-2. Select **New Order Webhook** action
+2. Select **New Order Allocations** action
 3. Choose your strategy from the dropdown
-4. Configure stock ID, order action, and leverage
-5. Connect your trigger (e.g., webhook, schedule, or another node)
+4. Click **Add Allocation** to create one or more allocations:
+   - Enter the stock ID (e.g., `AAPL:NASDAQ`)
+   - Select the action (Buy, Sell, Long, Short, Close, or Flat)
+   - Set the percent of buying power to allocate (optional, defaults to 1 = 100%)
+5. Optionally adjust the leverage (defaults to 1)
+6. Connect your trigger (e.g., webhook, schedule, or another node)
+
+### Example: Portfolio Rebalancing
+
+To allocate 50% to AAPL long, 30% to TSLA long, and 20% to BTC long:
+1. Add **Allocation 1**: Stock ID = `AAPL:NASDAQ`, Action = `Long`, Percent = `0.5`
+2. Add **Allocation 2**: Stock ID = `TSLA:NASDAQ`, Action = `Long`, Percent = `0.3`
+3. Add **Allocation 3**: Stock ID = `BTC:CRYPTO`, Action = `Long`, Percent = `0.2`
 
 ### Tips
 
@@ -72,7 +85,14 @@ For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP 
   - Stocks: `AAPL:NASDAQ`, `TSLA:NASDAQ`
   - Crypto: `BTC:CRYPTO`, `ETH:CRYPTO`
 
-- **Custom API Calls**: Use the HTTP Request node with your AlphaInsider API credential for any endpoints not covered by the New Order Webhook operation. See [AlphaInsider API documentation](https://api.alphainsider.com) for available endpoints.
+- **Percent Allocation**: The percent field (0 <= x <= 1) determines what portion of your strategy's buying power to use for each allocation. If omitted, defaults to 1 (100%). For example:
+  - `0.5` = 50% of buying power
+  - `0.25` = 25% of buying power
+  - `1` = 100% of buying power
+
+- **Multiple Allocations**: You can add as many allocations as needed in a single node execution. This is ideal for portfolio rebalancing or executing complex multi-asset strategies.
+
+- **Custom API Calls**: Use the HTTP Request node with your AlphaInsider API credential for any endpoints not covered by the New Order Allocations operation. See [AlphaInsider API documentation](https://api.alphainsider.com) for available endpoints.
 
 - **Multiple Accounts**: You can create multiple AlphaInsider API credentials for different accounts. Name them descriptively to keep track of which account each credential belongs to.
 
