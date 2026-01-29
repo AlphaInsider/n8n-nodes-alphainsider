@@ -25,7 +25,7 @@ Send multiple position allocations to your AlphaInsider strategies in a single r
 **Parameters:**
 - **Strategy**: Select from your account strategies (dynamically loaded)
 - **Allocations**: Array of allocation objects (add multiple), each containing:
-  - **Stock ID**: Format as `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `BTC:CRYPTO`)
+  - **Stock ID**: Format as `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `BTC:COINBASE`)
   - **Action**: Buy, Sell, Long, Short, Close, or Flat
   - **Percent**: Percentage of strategy buying power to allocate (0 <= x <= 1, defaults to 1)
 - **Leverage**: Set trading leverage (0 <= x < 2, defaults to 1).  **WARNING:** 2x leverage orders may fail if prices move; use less than 1.95x for reliable fills
