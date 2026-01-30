@@ -88,61 +88,17 @@ export class AlphaInsider implements INodeType {
       {
         displayName: 'Allocations',
         name: 'allocations',
-        type: 'fixedCollection',
-        default: {},
-        typeOptions: {
-          multipleValues: true
-        },
-        description: 'Array of allocations to create',
-        placeholder: 'Add Allocation',
+        type: 'string',
+        default: '[]',
+        description: 'JSON array of stratgy allocations. Each allocation object should have: stock_id (string), action (long/short/close), and percent (0-1, optional, defaults to 1).',
+        placeholder: 'Add allocation JSON string',
+        hint: '[{"stock_id":"AAPL:NASDAQ","action":"long","percent":1}]',
         required: true,
         displayOptions: {
           show: {
             action: ['newOrderAllocations']
           }
-        },
-        options: [
-          {
-            name: 'allocationValues',
-            displayName: 'Allocation',
-            values: [
-              {
-                displayName: 'Stock ID',
-                name: 'stock_id',
-                type: 'string',
-                default: '',
-                required: true,
-                description: 'Stock ID: "SYMBOL:EXCHANGE" or stock_id. Ex: AAPL:NASDAQ.',
-                placeholder: 'AAPL:NASDAQ'
-              },
-              {
-                displayName: 'Action',
-                name: 'action',
-                type: 'options',
-                default: 'long',
-                required: true,
-                options: [
-                  {name: 'Long', value: 'long'},
-                  {name: 'Short', value: 'short'},
-                  {name: 'Close', value: 'close'}
-                ],
-                description: 'The action for the order'
-              },
-              {
-                displayName: 'Percent',
-                name: 'percent',
-                type: 'number',
-                default: 1,
-                description: 'Percentage of strategy buying power (0 <= x <= 1). Defaults to 1.',
-                typeOptions: {
-                  minValue: 0,
-                  maxValue: 1,
-                  numberPrecision: 4
-                }
-              }
-            ]
-          }
-        ]
+        }
       },
       {
         displayName: 'Leverage',
@@ -230,6 +186,21 @@ export class AlphaInsider implements INodeType {
           if (!credentials || !credentials.apiKey) {
             throw new Error('AlphaInsider API credentials are required for creating order allocations');
           }
+          // Get the allocations as string
+          const allocationsStr = this.getNodeParameter('allocations', i) as string;
+          let allocations;
+          try {
+            allocations = JSON.parse(allocationsStr);
+            if (!Array.isArray(allocations)) {
+              throw new Error('Allocations must be a JSON array');
+            }
+          }
+          catch (parseError) {
+            throw new Error(`Invalid JSON for allocations: ${(parseError as Error).message}`);
+          }
+          // Temporarily override the parameter with parsed value for the helper function
+          // Assuming executeNewOrderAllocations uses this.getNodeParameter('allocations', i)
+          // If not, you may need to pass it explicitly or adjust the helper
           responseData = await executeNewOrderAllocations(this, i);
         } else {
           responseData = {

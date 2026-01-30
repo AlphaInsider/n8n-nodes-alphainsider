@@ -6,7 +6,18 @@ import {
 export async function executeNewOrderAllocations(context: IExecuteFunctions, itemIndex: number): Promise<any> {
   const strategy_id = context.getNodeParameter('strategy_id', itemIndex) as string;
   const leverage = context.getNodeParameter('leverage', itemIndex) as number;
-  const allocations = context.getNodeParameter('allocations', itemIndex) as any;
+  const allocationsString = context.getNodeParameter('allocations', itemIndex) as string;
+
+  let allocations;
+  try {
+    allocations = JSON.parse(allocationsString);
+  } catch (error) {
+    throw new Error(`Invalid JSON in allocations parameter: ${(error as Error).message}`);
+  }
+
+  if (!Array.isArray(allocations)) {
+    throw new Error('Allocations must be a JSON array');
+  }
 
   const options = {
     method: 'POST' as IHttpRequestMethods,
@@ -17,7 +28,7 @@ export async function executeNewOrderAllocations(context: IExecuteFunctions, ite
     body: {
       strategy_id,
       leverage: Math.trunc(leverage * 100) / 100,
-      allocations: allocations.allocationValues
+      allocations
     },
     json: true
   };
