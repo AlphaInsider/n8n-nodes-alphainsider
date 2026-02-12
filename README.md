@@ -19,19 +19,24 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Operations
 
-### New Order Allocations
-Send multiple position allocations to your AlphaInsider strategies in a single request. Perfect for portfolio rebalancing or executing multi-asset trading signals.
+This node uses a Resource/Operation structure for organization and extensibility.
+
+### Resources
+
+#### Trades
+Manage trades for your AlphaInsider strategies.
+
+**Operations:**
+
+- **New Order Allocations**: Send multiple position allocations to your AlphaInsider strategies in a single request. Perfect for portfolio rebalancing or executing multi-asset trading signals.
 
 **Parameters:**
 - **Strategy**: Select from your account strategies (dynamically loaded)
 - **Allocations**: JSON array of allocation objects. Each allocation should have:
-  - **stock_id**: Format as `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `BTC:COINBASE`)
+  - **stock_id**: Format as `SYMBOL:EXCHANGE` (e.g., `AAPL:NASDAQ`, `BTC:COINBASE`).
   - **action**: `long`, `short`, or `close`
-  - **percent**: Percentage of strategy buying power to allocate (0 <= x <= 1, optional, defaults to 1)
-- **Leverage**: Set trading leverage (0 <= x < 2, defaults to 1).  **WARNING:** 2x leverage orders may fail if prices move; use less than 1.95x for reliable fills
-
-### Custom API Calls
-For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP Request node** with your AlphaInsider API credential. Your credentials will be available in the HTTP Request node under **Authentication** → **Predefined Credential Type** → **AlphaInsider API**.
+  - **percent**: Percentage of buying power to allocate (0 <= x <= 2, where values >1 use leverage). Sum of all allocations cannot exceed 2 (200%). Required field
+- **Slippage**: Percentage offset from current bid/ask price for limit orders (0 <= x <= 0.05, optional, defaults to 0.002). Helps ensure orders fill by accounting for price movements
 
 ## Credentials
 
@@ -61,27 +66,28 @@ For custom API calls to other AlphaInsider endpoints, use n8n's built-in **HTTP 
 ### Basic Workflow Example
 
 1. Add the **AlphaInsider** node to your workflow
-2. Select **New Order Allocations** action
-3. Choose your strategy from the dropdown
-4. Enter your allocations as a JSON array, for example:
+2. Select **Trades** as the resource
+3. Select **New Order Allocations** as the operation
+4. Choose your strategy from the dropdown
+5. Enter your allocations as a JSON array, for example:
    ```json
    [
-     {"stock_id": "AAPL:NASDAQ", "action": "long", "percent": 0.5},
-     {"stock_id": "TSLA:NASDAQ", "action": "long", "percent": 0.3},
-     {"stock_id": "BTC:CRYPTO", "action": "long", "percent": 0.2}
+     {"stock_id": "AAPL:NASDAQ", "action": "long", "percent": 1},
+     {"stock_id": "TSLA:NASDAQ", "action": "long", "percent": 0.6},
+     {"stock_id": "SPY:NYSE", "action": "short", "percent": 0.4}
    ]
    ```
-5. Adjust the leverage (0 <= x < 2, defaults to 1)
-6. Connect your trigger (e.g., webhook, schedule, or another node)
+6. Optionally adjust slippage (0 <= x <= 0.05, defaults to 0.002)
+7. Connect your trigger (e.g., webhook, schedule, or another node)
 
 ### Example: Portfolio Rebalancing
 
-To allocate 50% to AAPL long, 30% to TSLA long, and 20% to BTC long, use this JSON array:
+To allocate 100% to AAPL long, 60% to TSLA long, and 40% to SPY short, equating to full 200% or 2x leverage, use this JSON array:
 ```json
 [
-  {"stock_id": "AAPL:NASDAQ", "action": "long", "percent": 0.5},
-  {"stock_id": "TSLA:NASDAQ", "action": "long", "percent": 0.3},
-  {"stock_id": "BTC:CRYPTO", "action": "long", "percent": 0.2}
+  {"stock_id": "AAPL:NASDAQ", "action": "long", "percent": 1},
+  {"stock_id": "TSLA:NASDAQ", "action": "long", "percent": 0.6},
+  {"stock_id": "SPY:NYSE", "action": "short", "percent": 0.4}
 ]
 ```
 
@@ -91,16 +97,16 @@ To allocate 50% to AAPL long, 30% to TSLA long, and 20% to BTC long, use this JS
 
 - **Stock ID Format**: Use `SYMBOL:EXCHANGE` format:
   - Stocks: `AAPL:NASDAQ`, `TSLA:NASDAQ`
-  - Crypto: `BTC:CRYPTO`, `ETH:CRYPTO`
+  - Crypto: `BTC:COINBASE`, `ETH:COINBASE`
 
-- **Percent Allocation**: The percent field (0 <= x <= 1) determines what portion of your strategy's buying power to use for each allocation. If omitted, defaults to 1 (100%). For example:
-  - `0.5` = 50% of buying power
-  - `0.25` = 25% of buying power
-  - `1` = 100% of buying power
+- **Percent Allocation**: The percent field (0 <= x <= 2) determines what portion of your strategy's buying power to use for each allocation, including leverage. This field is required. For example:
+  - `0.5` = 50% of buying power (no leverage)
+  - `1` = 100% of buying power (no leverage)
+  - `1.5` = 150% of buying power (1.5x leverage)
+  - `2` = 200% of buying power
+  - The sum of all allocation percents cannot exceed 2 (200%)
 
 - **Multiple Allocations**: You can include as many allocations as needed in the JSON array. This is ideal for portfolio rebalancing or executing complex multi-asset strategies. You can also pass JSON arrays from other n8n nodes as parameters.
-
-- **Custom API Calls**: Use the HTTP Request node with your AlphaInsider API credential for any endpoints not covered by the New Order Allocations operation. See [AlphaInsider API documentation](https://api.alphainsider.com) for available endpoints.
 
 - **Multiple Accounts**: You can create multiple AlphaInsider API credentials for different accounts. Name them descriptively to keep track of which account each credential belongs to.
 
