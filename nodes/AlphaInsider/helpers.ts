@@ -5,7 +5,7 @@ import {
 
 export async function executeNewOrderAllocations(context: IExecuteFunctions, itemIndex: number): Promise<any> {
   const strategy_id = context.getNodeParameter('strategy_id', itemIndex) as string;
-  const leverage = context.getNodeParameter('leverage', itemIndex) as number;
+  const slippage = context.getNodeParameter('slippage', itemIndex, 0) as number;
   const allocationsString = context.getNodeParameter('allocations', itemIndex) as string;
 
   let allocations;
@@ -27,8 +27,8 @@ export async function executeNewOrderAllocations(context: IExecuteFunctions, ite
     },
     body: {
       strategy_id,
-      leverage: Math.trunc(leverage * 100) / 100,
-      allocations
+      allocations,
+      slippage: Math.trunc(slippage * 1000) / 1000
     },
     json: true
   };
