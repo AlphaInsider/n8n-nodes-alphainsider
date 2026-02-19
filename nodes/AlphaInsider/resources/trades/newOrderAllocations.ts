@@ -11,7 +11,7 @@ export const newOrderAllocationsDescription: INodeProperties[] = [
 		name: 'strategy_id',
 		type: 'options',
 		typeOptions: {
-			loadOptionsMethod: 'getStrategies'
+			loadOptionsMethod: 'getUserStrategies'
 		},
 		default: '',
 		required: true,

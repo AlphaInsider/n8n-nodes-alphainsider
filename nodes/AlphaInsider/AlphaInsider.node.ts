@@ -53,7 +53,7 @@ export class AlphaInsider implements INodeType {
 
   methods = {
     loadOptions: {
-      async getStrategies(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+      async getUserStrategies(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
         try {
           const userInfoOptions = {
             method: 'GET' as IHttpRequestMethods,
