@@ -20,7 +20,7 @@ export class AlphaInsiderApi implements ICredentialType {
         password: true
       },
       default: '',
-      description: 'Generate your API key from <a href="https://alphainsider.com/settings/developers" target="_blank">AlphaInsider Developer Settings</a>. <br> Make sure to set your permissions (e.g., webhooks -> newOrderWebhook)'
+      description: 'Generate your API key from <a href="https://alphainsider.com/settings/developers" target="_blank">AlphaInsider Developer Settings</a>. <br> Click the <strong>n8n/make/zapier</strong> button to get the permissions needed for the API key.'
     }
   ];
 
@@ -35,9 +35,12 @@ export class AlphaInsiderApi implements ICredentialType {
 
   test: ICredentialTestRequest = {
     request: {
-      method: 'GET',
+      method: 'POST',
       baseURL: 'https://alphainsider.com/api',
-      url: '/getUserInfo'
+      url: '/verifyToken',
+      body: {
+        token: '={{$credentials.apiKey}}'
+      }
     }
   };
 }
