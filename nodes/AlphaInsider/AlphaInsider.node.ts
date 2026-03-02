@@ -3,7 +3,8 @@ import {
   INodeTypeDescription,
   IExecuteFunctions,
   INodeExecutionData,
-  NodeConnectionTypes
+  NodeConnectionTypes,
+  NodeOperationError
 } from 'n8n-workflow';
 
 // AlphaInsider Node Class
@@ -38,7 +39,7 @@ export class AlphaInsider implements INodeType {
       try {
         const credentials = await this.getCredentials('AlphaInsiderApi');
         if (!credentials || !credentials.apiKey) {
-          throw new Error('AlphaInsider API credentials are required');
+          throw new NodeOperationError(this.getNode(), 'AlphaInsider API credentials are required');
         }
 
         returnData.push({
