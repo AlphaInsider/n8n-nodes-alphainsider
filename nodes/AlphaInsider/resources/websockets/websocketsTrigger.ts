@@ -98,6 +98,7 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 
 	let websocket: WebSocket | undefined;
 	let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+	let pingInterval: ReturnType<typeof setInterval> | undefined;
 	let isClosing = false;
 
 	const scheduleReconnect = (): void => {
@@ -156,6 +157,13 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 				}
 			};
 			websocket?.send(JSON.stringify(subscribePayload));
+
+			// Start ping interval to keep connection alive
+			pingInterval = setInterval(() => {
+				if (websocket?.readyState === WebSocket.OPEN) {
+					websocket.ping();
+				}
+			}, 5000);
 		});
 
 		websocket.on('message', handleMessage);
@@ -167,6 +175,10 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 		});
 
 		websocket.on('close', () => {
+			if (pingInterval !== undefined) {
+				clearInterval(pingInterval);
+				pingInterval = undefined;
+			}
 			websocket = undefined;
 			scheduleReconnect();
 		});
@@ -181,6 +193,11 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 			if (reconnectTimeout !== undefined) {
 				clearTimeout(reconnectTimeout);
 				reconnectTimeout = undefined;
+			}
+
+			if (pingInterval !== undefined) {
+				clearInterval(pingInterval);
+				pingInterval = undefined;
 			}
 
 			if (!websocket) {
