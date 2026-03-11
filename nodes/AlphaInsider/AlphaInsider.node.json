@@ -5,6 +5,12 @@
 	"categories": [
 		"Finance"
 	],
+	"alias": [
+		"AlphaInsider Websockets",
+		"AlphaInsider Websockets Trigger",
+		"AlphaInsider Websocket",
+		"AlphaInsider Trigger"
+	],
 	"resources": {
 		"credentialDocumentation": [
 			{
@@ -14,6 +20,9 @@
 		"primaryDocumentation": [
 			{
 				"url": "https://api.alphainsider.com"
+			},
+			{
+				"url": "https://api.alphainsider.com/resources/websockets"
 			}
 		]
 	}
