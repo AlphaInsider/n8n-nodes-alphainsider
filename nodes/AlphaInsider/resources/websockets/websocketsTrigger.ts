@@ -3,12 +3,11 @@ import {
 	INodeProperties,
 	ITriggerFunctions,
 	ITriggerResponse,
-	NodeOperationError
+	NodeOperationError,
+	sleep
 } from 'n8n-workflow';
-import WebSocket, { RawData } from 'ws';
 
 const ALPHA_INSIDER_WEBSOCKET_URL = 'wss://alphainsider.com/ws';
-const WEBSOCKET_USER_AGENT = 'n8n-alphainsider-websocket/1.0';
 
 const showOnlyForWebsockets = {
 	resource: ['websockets']
@@ -61,23 +60,18 @@ export const websocketsTriggerDescription: INodeProperties[] = [
 function parseChannels(channelsInput: string): string[] {
 	return [...new Set(
 		channelsInput
-			.split(/[\n,]+/)
-			.map((channel) => channel.trim())
-			.filter((channel) => channel.length > 0)
+		.split(/[\n,]+/)
+		.map((channel) => channel.trim())
+		.filter((channel) => channel.length > 0)
 	)];
 }
 
-function messageToString(data: RawData): string {
-	if (typeof data === 'string') {
-		return data;
-	}
-	if (Buffer.isBuffer(data)) {
-		return data.toString('utf8');
-	}
-	if (Array.isArray(data)) {
-		return Buffer.concat(data).toString('utf8');
-	}
-	return Buffer.from(data).toString('utf8');
+function messageToString(data: unknown): string {
+	if(typeof data === 'string') return data;
+	if(data instanceof ArrayBuffer) return new TextDecoder('utf-8').decode(data);
+	if(data instanceof Uint8Array) return new TextDecoder('utf-8').decode(data);
+	if(data instanceof Blob) return ''; // rare for this API
+	return String(data);
 }
 
 export async function executeWebsocketsTrigger(context: ITriggerFunctions): Promise<ITriggerResponse> {
@@ -97,38 +91,35 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 	}
 
 	let websocket: WebSocket | undefined;
-	let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+	let isReconnecting = false;
 	let pingInterval: ReturnType<typeof setInterval> | undefined;
 	let isClosing = false;
 
-	const scheduleReconnect = (): void => {
-		if (isClosing || !reconnect || reconnectTimeout !== undefined) {
-			return;
-		}
+	const scheduleReconnect = async (): Promise<void> => {
+		if(isClosing || !reconnect || isReconnecting) return;
 
-		reconnectTimeout = setTimeout(() => {
-			reconnectTimeout = undefined;
+		isReconnecting = true;
+		await sleep(reconnectDelay * 1000);
+		isReconnecting = false;
+
+		if(!isClosing) {
 			connectWebsocket();
-		}, reconnectDelay * 1000);
+		}
 	};
 
-	const handleMessage = (data: RawData): void => {
+	const handleMessage = (data: unknown): void => {
 		const rawMessage = messageToString(data);
-
 		try {
 			const parsed = JSON.parse(rawMessage) as unknown;
-
-			if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+			if(typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
 				const message = parsed as IDataObject;
 				const event = typeof message.event === 'string' ? message.event : undefined;
 
 				// Skip control messages
-				if (event === 'subscribe' || event === 'error') {
-					return;
-				}
+				if(event === 'subscribe' || event === 'error') return;
 
-				// Only emit data events (those starting with 'ws')
-				if (event !== undefined && event.startsWith('ws')) {
+				// Only emit data events
+				if(event !== undefined && event.startsWith('ws')) {
 					context.emit([[{ json: message }]]);
 				}
 			}
@@ -138,50 +129,42 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 	};
 
 	const connectWebsocket = (): void => {
-		if (isClosing) {
-			return;
-		}
+		if(isClosing) return;
 
-		websocket = new WebSocket(ALPHA_INSIDER_WEBSOCKET_URL, {
-			headers: {
-				'User-Agent': WEBSOCKET_USER_AGENT
-			}
-		});
+		websocket = new WebSocket(ALPHA_INSIDER_WEBSOCKET_URL);
 
-		websocket.on('open', () => {
+		websocket.onopen = () => {
 			const subscribePayload = {
 				event: 'subscribe',
-				payload: {
-					channels,
-					token: apiKey
-				}
+				payload: { channels, token: apiKey }
 			};
 			websocket?.send(JSON.stringify(subscribePayload));
 
-			// Start ping interval to keep connection alive
+			// Keep-alive ping
 			pingInterval = setInterval(() => {
-				if (websocket?.readyState === WebSocket.OPEN) {
-					websocket.ping();
+				if(websocket?.readyState === WebSocket.OPEN) {
+					websocket.send(JSON.stringify({ event: 'ping' }));
 				}
-			}, 5000);
-		});
+			}, 30000);
+		};
 
-		websocket.on('message', handleMessage);
+		websocket.onmessage = (event) => handleMessage(event.data);
 
-		websocket.on('error', (error: Error) => {
-			if (!isClosing && !reconnect) {
-				context.emitError(new NodeOperationError(context.getNode(), `WebSocket error: ${error.message}`));
+		websocket.onerror = (event) => {
+			if(!isClosing && !reconnect) {
+				const errorMsg = (event as any).error?.message || 'Unknown WebSocket error';
+				context.emitError(new NodeOperationError(context.getNode(), `WebSocket error: ${errorMsg}`));
 			}
-		});
+		};
 
-		websocket.on('close', () => {
-			if (pingInterval !== undefined) {
+		websocket.onclose = () => {
+			if(pingInterval) {
 				clearInterval(pingInterval);
 				pingInterval = undefined;
 			}
 			websocket = undefined;
-			scheduleReconnect();
-		});
+			void scheduleReconnect();
+		};
 	};
 
 	connectWebsocket();
@@ -190,42 +173,25 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 		closeFunction: async () => {
 			isClosing = true;
 
-			if (reconnectTimeout !== undefined) {
-				clearTimeout(reconnectTimeout);
-				reconnectTimeout = undefined;
-			}
-
-			if (pingInterval !== undefined) {
+			if(pingInterval) {
 				clearInterval(pingInterval);
 				pingInterval = undefined;
 			}
 
-			if (!websocket) {
-				return;
-			}
+			if(!websocket) return;
 
 			const socketToClose = websocket;
 			websocket = undefined;
 
-			await new Promise<void>((resolve) => {
-				let done = false;
-				const finish = () => {
-					if (!done) {
-						done = true;
-						resolve();
-					}
-				};
+			if(socketToClose.readyState === WebSocket.OPEN || socketToClose.readyState === WebSocket.CONNECTING) {
+				const closePromise = new Promise<void>((resolve) => {
+					socketToClose.addEventListener('close', () => resolve());
+				});
 
-				socketToClose.once('close', finish);
+				socketToClose.close();
 
-				if (socketToClose.readyState === WebSocket.OPEN || socketToClose.readyState === WebSocket.CONNECTING) {
-					socketToClose.close();
-					setTimeout(finish, 1000);
-					return;
-				}
-
-				finish();
-			});
+				await Promise.race([closePromise, sleep(1000)]);
+			}
 		}
 	};
 }
