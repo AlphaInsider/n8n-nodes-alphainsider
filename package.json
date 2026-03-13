@@ -45,13 +45,9 @@
 			"dist/nodes/AlphaInsider/AlphaInsider.node.js"
 		]
 	},
-	"dependencies": {
-		"ws": "^8.18.3"
-	},
 	"devDependencies": {
 		"@n8n/node-cli": "^0.17.0",
 		"@types/node": "^25.4.0",
-		"@types/ws": "^8.18.1",
 		"eslint": "^9.39.2",
 		"typescript": "^5.9.3"
 	},
