@@ -30,6 +30,7 @@
 		"url": "https://github.com/AlphaInsider/n8n-nodes-alphainsider"
 	},
 	"scripts": {
+		"lint": "eslint dist/",
 		"build": "n8n-node build",
 		"dev": "n8n-node dev"
 	},

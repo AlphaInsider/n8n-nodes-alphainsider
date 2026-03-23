@@ -92,8 +92,16 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 
 	let websocket: WebSocket | undefined;
 	let isReconnecting = false;
-	let pingInterval: ReturnType<typeof setInterval> | undefined;
 	let isClosing = false;
+	
+	const pingLoop = async (wait: number = 30000): Promise<void> => {
+		while (!isClosing && websocket?.readyState === WebSocket.OPEN) {
+			await sleep(wait);
+			if (!isClosing && websocket?.readyState === WebSocket.OPEN) {
+				websocket.send(JSON.stringify({ event: 'ping' }));
+			}
+		}
+	};
 
 	const scheduleReconnect = async (): Promise<void> => {
 		if(isClosing || !reconnect || isReconnecting) return;
@@ -141,27 +149,20 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 			websocket?.send(JSON.stringify(subscribePayload));
 
 			// Keep-alive ping
-			pingInterval = setInterval(() => {
-				if(websocket?.readyState === WebSocket.OPEN) {
-					websocket.send(JSON.stringify({ event: 'ping' }));
-				}
-			}, 30000);
+			void pingLoop();
 		};
 
 		websocket.onmessage = (event) => handleMessage(event.data);
 
 		websocket.onerror = (event) => {
 			if(!isClosing && !reconnect) {
-				const errorMsg = (event as any).error?.message || 'Unknown WebSocket error';
+				const err = (event as any).error;
+				const errorMsg = (err && err.message) || 'Unknown WebSocket error';
 				context.emitError(new NodeOperationError(context.getNode(), `WebSocket error: ${errorMsg}`));
 			}
 		};
 
 		websocket.onclose = () => {
-			if(pingInterval) {
-				clearInterval(pingInterval);
-				pingInterval = undefined;
-			}
 			websocket = undefined;
 			void scheduleReconnect();
 		};
@@ -172,11 +173,6 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 	return {
 		closeFunction: async () => {
 			isClosing = true;
-
-			if(pingInterval) {
-				clearInterval(pingInterval);
-				pingInterval = undefined;
-			}
 
 			if(!websocket) return;
 
