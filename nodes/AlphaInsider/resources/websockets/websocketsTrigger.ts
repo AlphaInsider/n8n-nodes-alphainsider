@@ -119,12 +119,16 @@ export async function executeWebsocketsTrigger(context: ITriggerFunctions): Prom
 		const rawMessage = messageToString(data);
 		try {
 			const parsed = JSON.parse(rawMessage) as unknown;
-			if(typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-				const message = parsed as IDataObject;
+			const items = Array.isArray(parsed) ? parsed : [parsed];
+
+			for(const item of items) {
+				if(typeof item !== 'object' || item === null || Array.isArray(item)) continue;
+
+				const message = item as IDataObject;
 				const event = typeof message.event === 'string' ? message.event : undefined;
 
 				// Skip control messages
-				if(event === 'subscribe' || event === 'error') return;
+				if(event === 'subscribe' || event === 'error') continue;
 
 				// Only emit data events
 				if(event !== undefined && event.startsWith('ws')) {

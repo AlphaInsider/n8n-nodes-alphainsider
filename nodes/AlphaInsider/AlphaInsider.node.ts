@@ -16,7 +16,7 @@ export class AlphaInsider implements INodeType {
 		group: ['trigger'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'Open Marketplace for Trading Strategies. Follow top crypto & stock strategies in real-time. Automate trades by connecting your broker or exchange. Split capital across multiple strategies.',
+		description: 'Real-time stock & crypto data, automated trading, live trade alerts, broker connections.',
 		defaults: {
 			name: 'AlphaInsider'
 		},
