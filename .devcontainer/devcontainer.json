@@ -8,9 +8,6 @@
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "containerEnv": {
-    "CLAUDE_PLUGIN_ROOT": "/workspace"
-  },
   "postCreateCommand": "/usr/local/bin/init-plugins.sh",
   "postStartCommand": "claude update || true",
   "waitFor": "postCreateCommand"
