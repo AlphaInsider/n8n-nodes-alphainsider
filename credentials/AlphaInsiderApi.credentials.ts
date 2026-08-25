@@ -35,11 +35,11 @@ export class AlphaInsiderApi implements ICredentialType {
 
   test: ICredentialTestRequest = {
     request: {
-      method: 'POST',
+      method: 'GET',
       baseURL: 'https://alphainsider.com/api',
       url: '/verifyToken',
-      body: {
-        token: '={{$credentials.apiKey}}'
+      headers: {
+        Authorization: '={{$credentials.apiKey}}'
       }
     }
   };

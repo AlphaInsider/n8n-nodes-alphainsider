@@ -22,7 +22,7 @@ Follow the [n8n community nodes installation guide](https://docs.n8n.io/integrat
 3. Generate an API key.
 4. In n8n, create **AlphaInsider API** credentials and paste your API key.
 
-n8n validates credentials with a `POST https://alphainsider.com/api/verifyToken` request.
+n8n validates credentials with a `GET https://alphainsider.com/api/verifyToken` request using the API key in the `Authorization` header.
 
 ## Usage
 
