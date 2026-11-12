@@ -3,6 +3,9 @@
 	"version": "1.4.5",
 	"description": "Official community node to connect n8n to the Alpha Insider API.",
 	"license": "MIT",
+	"engines": {
+		"node": ">=26.13.1"
+	},
 	"homepage": "https://alphainsider.com/",
 	"keywords": [
 		"n8n-community-node-package",
